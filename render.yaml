@@ -1,0 +1,21 @@
+# Render.com Blueprint Configuration
+# This file allows you to deploy directly from GitHub
+# Go to Render Dashboard > New > Blueprint
+
+services:
+  - type: web
+    name: taxi-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      # Add these in Render Dashboard after creating MongoDB Atlas:
+      # - MONGO_URI (from MongoDB Atlas)
+      # - SESSION_SECRET (generate random string)
+      # - FRONTEND_ORIGIN (your Vercel frontend URL)
+      # - PORT (auto-set by Render, but can override)
+
