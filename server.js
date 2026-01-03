@@ -63,8 +63,7 @@ async function start() {
   // Allow multiple local dev origins (Nuxt can run on various ports)
   const allowedOrigins = new Set([
     FRONTEND_ORIGIN,
-    'https://taxi-backend-16lw7g63j-ravi5113s-projects.vercel.app/',
-    'https://taxi-backend-16lw7g63j-ravi5113s-projects.vercel.app',
+    'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',

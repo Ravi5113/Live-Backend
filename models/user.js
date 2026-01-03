@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true, required: true },
-  passwordHash: String,
+  password: String, // Primary password field
+  passwordHash: String, // Legacy field for backward compatibility
   // `roles` supports multiple role slugs (RBAC). Keep `role` for backwards compatibility.
   role: { type: String, default: 'user' }, // legacy single-role
   roles: { type: [String], default: ['user'] },
