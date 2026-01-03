@@ -63,21 +63,77 @@ async function start() {
   // Allow multiple local dev origins (Nuxt can run on various ports)
   const allowedOrigins = new Set([
     FRONTEND_ORIGIN,
-    'http://localhost:3000',
+    'https://taxi-backend-16lw7g63j-ravi5113s-projects.vercel.app/',
+    'https://taxi-backend-16lw7g63j-ravi5113s-projects.vercel.app',
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
     'http://localhost:5173',
     'http://127.0.0.1:5173'
   ])
+  
+  // Log allowed origins for debugging
+  if (NODE_ENV === 'production') {
+    console.log('🌐 CORS Configuration:')
+    console.log('   FRONTEND_ORIGIN:', FRONTEND_ORIGIN)
+    console.log('   Allowed origins:', Array.from(allowedOrigins).filter(Boolean))
+  }
+  
   app.use(cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true) // SSR, same-origin, or curl
-      if (allowedOrigins.has(origin)) return callback(null, true)
+      if (NODE_ENV === 'production') {
+        console.log('🌐 CORS check - Origin:', origin)
+      }
+      
+      if (!origin) {
+        if (NODE_ENV === 'production') {
+          console.log('   ✅ No origin (SSR/same-origin) - allowing')
+        }
+        return callback(null, true) // SSR, same-origin, or curl
+      }
+      
+      if (allowedOrigins.has(origin)) {
+        if (NODE_ENV === 'production') {
+          console.log('   ✅ Origin allowed')
+        }
+        return callback(null, true)
+      }
+      
+      console.error('   ❌ CORS blocked for origin:', origin)
+      console.error('   Allowed origins:', Array.from(allowedOrigins).filter(Boolean))
       return callback(new Error(`CORS blocked for origin ${origin}`))
     },
     credentials: true
   }))
+  
+  // CORS error handler
+  app.use((err, req, res, next) => {
+    if (err.message && err.message.includes('CORS')) {
+      console.error('❌ CORS Error:', err.message)
+      console.error('   Request Origin:', req.headers.origin)
+      console.error('   Request Path:', req.path)
+      return res.status(403).json({ 
+        success: false, 
+        message: 'CORS blocked', 
+        error: err.message,
+        origin: req.headers.origin,
+        allowedOrigins: Array.from(allowedOrigins).filter(Boolean)
+      })
+    }
+    next(err)
+  })
+  
+  // Request logging middleware
+  app.use((req, res, next) => {
+    if (NODE_ENV === 'production' || req.path.includes('/api/auth/login')) {
+      console.log(`${new Date().toISOString()} ${req.method} ${req.path}`, {
+        origin: req.headers.origin,
+        'content-type': req.headers['content-type'],
+        'user-agent': req.headers['user-agent']?.substring(0, 50)
+      })
+    }
+    next()
+  })
 
   app.use(
     session({
@@ -93,7 +149,7 @@ async function start() {
       cookie: {
         httpOnly: true,
         secure: NODE_ENV === 'production',
-        sameSite: NODE_ENV === 'production' ? 'lax' : 'lax',
+        sameSite: NODE_ENV === 'production' ? 'none' : 'lax', // 'none' required for cross-origin cookies
         // set domain only if provided to avoid mismatches in dev
         domain: process.env.COOKIE_DOMAIN || undefined,
         maxAge: 1000 * 60 * 60 * 24
